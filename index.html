@@ -1,30 +1,204 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ifan.help</title>
-  <style>
-    body {
-      font-family: 'Arial', sans-serif;
-      background-color: #f0f8ff;
-      color: #333;
-      margin: 0;
-      padding: 20px;
-      text-align: center;
-    }
-    h1 {
-      color: #4a90e2;
-    }
-    p {
-      font-size: 18px;
-      line-height: 1.6;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>3D Interactive Space</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  height:100vh;
+  overflow:hidden;
+  background:#050510;
+  font-family:system-ui,sans-serif;
+}
+/* 粒子背景画布 */
+#bgCanvas{
+  position:fixed;
+  inset:0;
+  z-index:1;
+}
+.wrap{
+  position:relative;
+  width:100%;
+  height:100vh;
+  z-index:2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  perspective: 1200px; /* 3D透视核心 */
+}
+.scene{
+  transform-style: preserve-3d;
+  transform: rotateX(-20deg) rotateY(0deg) scale(1);
+  transition: transform 0.08s ease-out;
+}
+.cube-box{
+  width: 260px;
+  height:260px;
+  position:relative;
+  transform-style:preserve-3d;
+  animation: autoRotate 25s linear infinite;
+}
+/* 立方体6个面 */
+.face{
+  position:absolute;
+  width:260px;
+  height:260px;
+  border:1px solid #7b2ffd;
+  background: rgba(123, 47, 253, 0.07);
+  backdrop-filter: blur(4px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-size:22px;
+  text-shadow:0 0 12px #a76bff;
+  box-shadow: 0 0 25px #7b2ffd44 inset;
+}
+.face-front{transform: translateZ(130px)}
+.face-back{transform: translateZ(-130px) rotateY(180deg)}
+.face-left{transform: translateX(-130px) rotateY(-90deg)}
+.face-right{transform: translateX(130px) rotateY(90deg)}
+.face-top{transform: translateY(-130px) rotateX(90deg)}
+.face-bottom{transform: translateY(130px) rotateX(-90deg)}
+
+@keyframes autoRotate{
+  0%{transform: rotateY(0deg)}
+  100%{transform: rotateY(360deg)}
+}
+.tip{
+  position:fixed;
+  bottom:30px;
+  left:50%;
+  transform:translateX(-50%);
+  color:#c3b2ff;
+  z-index:10;
+  font-size:14px;
+  text-align:center;
+}
+</style>
 </head>
 <body>
-  <h1>欢迎来到 ifan.help</h1>
-  <p>这是我自己写的第一个网页！</p>
-  <p>接下来我会慢慢添加更多内容。</p>
+<canvas id="bgCanvas"></canvas>
+<div class="wrap" id="container">
+  <div class="scene" id="scene">
+    <div class="cube-box" id="cube">
+      <div class="face face-front">FRONT</div>
+      <div class="face face-back">BACK</div>
+      <div class="face face-left">LEFT</div>
+      <div class="face face-right">RIGHT</div>
+      <div class="face face-top">TOP</div>
+      <div class="face face-bottom">BOTTOM</div>
+    </div>
+  </div>
+</div>
+<div class="tip">🖱️按住鼠标拖拽旋转场景 | 滚轮放大缩小 | 立体3D交互</div>
+
+<script>
+// ===== 粒子背景 =====
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+let w,h;
+function resize(){
+  w=canvas.width=innerWidth;
+  h=canvas.height=innerHeight;
+}
+resize();
+window.addEventListener('resize',resize);
+
+class Dot{
+  constructor(){
+    this.x=Math.random()*w;
+    this.y=Math.random()*h;
+    this.r=Math.random()*1.8+0.3;
+    this.sx=(Math.random()-0.5)*0.6;
+    this.sy=(Math.random()-0.5)*0.6;
+  }
+  update(){
+    this.x+=this.sx;
+    this.y+=this.sy;
+    if(this.x<0||this.x>w)this.sx*=-1;
+    if(this.y<0||this.y>h)this.sy*=-1;
+  }
+  draw(){
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+    ctx.fillStyle="#b388ff";
+    ctx.fill();
+  }
+}
+const dots = Array.from({length:180},()=>new Dot());
+function loop(){
+  ctx.clearRect(0,0,w,h);
+  dots.forEach(d=>{d.update();d.draw()});
+  requestAnimationFrame(loop);
+}
+loop();
+
+// ===== 拖拽旋转3D核心逻辑 =====
+const container = document.getElementById('container');
+const scene = document.getElementById('scene');
+
+let drag = false;
+let startX, startY;
+let rotX = -20;
+let rotY = 0;
+let scale = 1;
+
+container.onmousedown = e=>{
+  drag=true;
+  startX=e.clientX;
+  startY=e.clientY;
+  cube.style.animationPlayState='paused'; //拖拽时暂停自动旋转
+}
+document.onmousemove = e=>{
+  if(!drag) return;
+  const dx = e.clientX - startX;
+  const dy = e.clientY - startY;
+  rotY += dx * 0.45;
+  rotX -= dy * 0.45;
+  //限制上下旋转角度，防止翻转
+  rotX = Math.max(-75, Math.min(75, rotX));
+  scene.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg) scale(${scale})`;
+  startX=e.clientX;
+  startY=e.clientY;
+}
+document.onmouseup = ()=>{
+  drag=false;
+  cube.style.animationPlayState='running';
+}
+//滚轮缩放
+container.onwheel = e=>{
+  e.preventDefault();
+  scale += e.deltaY >0 ? -0.06 : 0.06;
+  scale = Math.max(0.35, Math.min(2.2, scale));
+  scene.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg) scale(${scale})`;
+}
+
+// 移动端触摸适配
+container.ontouchstart = e=>{
+  drag=true;
+  startX=e.touches[0].clientX;
+  startY=e.touches[0].clientY;
+  cube.style.animationPlayState='paused';
+}
+document.ontouchmove = e=>{
+  if(!drag) return;
+  const touch = e.touches[0];
+  const dx = touch.clientX - startX;
+  const dy = touch.clientY - startY;
+  rotY += dx * 0.45;
+  rotX -= dy * 0.45;
+  rotX = Math.max(-75, Math.min(75, rotX));
+  scene.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg) scale(${scale})`;
+  startX=touch.clientX;
+  startY=touch.clientY;
+}
+document.ontouchend = ()=>{
+  drag=false;
+  cube.style.animationPlayState='running';
+}
+</script>
 </body>
 </html>
