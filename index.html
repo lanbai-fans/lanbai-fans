@@ -2,7 +2,10 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>魔域·裂界 — 2.5D 刷宝ARPG 原型</title>
 <style>
   :root{
@@ -13,7 +16,7 @@
   }
   *{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-user-select:none;}
   html,body{width:100%;height:100%;overflow:hidden;background:#05060a;font-family:"Microsoft YaHei","PingFang SC",sans-serif;color:#d8dce6;}
-  #game{position:fixed;inset:0;display:block;background:#07080d;}
+  #game{position:fixed;inset:0;display:block;background:#07080d;touch-action:none;-webkit-tap-highlight-color:transparent;}
   /* ---------- HUD ---------- */
   #hud{position:fixed;inset:0;pointer-events:none;z-index:10;}
   .bar{height:14px;border-radius:4px;background:rgba(0,0,0,.6);border:1px solid #333a4a;overflow:hidden;position:relative;}
@@ -101,9 +104,80 @@
   .spin{width:36px;height:36px;border:3px solid #2a2f3d;border-top-color:var(--gold);border-radius:50%;animation:rot 1s linear infinite;}
   @keyframes rot{to{transform:rotate(360deg)}}
   #msg{position:fixed;top:120px;left:50%;transform:translateX(-50%);z-index:45;color:#ffe9a0;font-size:18px;font-weight:800;text-shadow:0 2px 8px #000;letter-spacing:2px;opacity:0;transition:opacity .3s;pointer-events:none;}
+  /* ---------- 肉鸽选卡 ---------- */
+  #cardpick{background:radial-gradient(ellipse at center,rgba(34,22,46,.85),rgba(4,5,9,.97));z-index:55;}
+  #cardpick .logo{font-size:36px;}
+  #cardRow{display:flex;gap:24px;margin-top:26px;flex-wrap:wrap;justify-content:center;padding:0 16px;}
+  .ccard{width:232px;min-height:250px;background:rgba(12,14,20,.94);border:2px solid #3a4252;border-radius:14px;padding:20px 16px 16px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;box-shadow:0 6px 24px rgba(0,0,0,.55);transition:transform .15s,box-shadow .15s;pointer-events:auto;}
+  .ccard:hover{transform:translateY(-6px) scale(1.03);box-shadow:0 12px 36px rgba(0,0,0,.75);}
+  .ccard:active{transform:scale(.97);}
+  .cc-icon{font-size:46px;margin-top:6px;filter:drop-shadow(0 0 10px rgba(255,215,0,.35));}
+  .cc-name{font-size:17px;font-weight:800;color:#fff;letter-spacing:1px;margin-top:4px;}
+  .cc-rare{font-size:11px;letter-spacing:2px;font-weight:700;}
+  .cc-desc{font-size:12.5px;color:#b8c2d6;line-height:1.65;text-align:center;margin-top:6px;flex:1;display:flex;align-items:center;}
+  #cardpick .sub{font-size:13px;color:#9aa4b8;margin-top:6px;}
+  #cardpick .sub b{color:var(--gold);}
   #tutorial{position:fixed;z-index:46;left:50%;top:46%;transform:translate(-50%,-50%);background:rgba(8,10,15,.95);border:1px solid var(--gold-dim);border-radius:12px;padding:20px 26px;max-width:460px;font-size:13px;line-height:1.8;color:#cfd6e4;display:none;box-shadow:0 10px 40px #000;}
   #tutorial b{color:var(--gold);}
   #tutorial .tbtn{display:block;margin:12px auto 0;background:var(--gold);color:#14110a;border:none;padding:8px 26px;border-radius:6px;font-weight:800;cursor:pointer;font-size:13px;}
+  /* ---------- 移动端适配 ---------- */
+  #mobilebar{display:none;}
+  #helpsTouch{display:none;}
+  @media (pointer:coarse), (max-width:720px){
+    #mobilebar{display:flex;flex-direction:column;gap:10px;position:fixed;right:12px;bottom:calc(96px + env(safe-area-inset-bottom));z-index:20;}
+    .mbtn{width:52px;height:52px;border-radius:50%;background:var(--panel);border:2px solid var(--panel-line);font-size:22px;color:#e8e8e8;box-shadow:0 2px 8px rgba(0,0,0,.6);cursor:pointer;line-height:1;}
+    .mbtn:active{border-color:var(--gold);transform:scale(0.94);}
+    #helps{display:none;}
+    #helpsTouch{display:block;}
+  }
+  #helpsTouch{position:fixed;left:16px;bottom:calc(100px + env(safe-area-inset-bottom));z-index:20;font-size:11px;color:#6f7890;line-height:1.9;pointer-events:none;text-shadow:0 1px 3px #000;}
+  #helpsTouch b{color:#aab4ca;}
+  @media (max-width:720px){
+    /* 顶栏压缩 */
+    #topbar{height:auto;flex-wrap:wrap;gap:6px 10px;padding:6px 10px;}
+    #playerhp{width:120px;} #playermp{width:88px;} #xpb{width:100px;margin-top:0;}
+    #levelbox{font-size:16px;} #floorbox{font-size:13px;margin-left:0;} #soulbox{font-size:13px;} #killbox{font-size:13px;}
+    #levelbox small,#floorbox small,#soulbox small,#killbox small{font-size:9px;}
+    .lbl{display:none;}
+    .bar{height:12px;}
+    .bar span{font-size:10px;}
+    /* 技能栏 */
+    #skillbar{bottom:calc(10px + env(safe-area-inset-bottom));gap:6px;}
+    .sk{width:50px;height:50px;font-size:22px;border-radius:10px;}
+    /* 掉落推送 */
+    #feed{width:150px;right:10px;bottom:calc(180px + env(safe-area-inset-bottom));}
+    .feed-item{font-size:11px;padding:4px 6px;}
+    /* Boss 条 */
+    #bosswrap{top:92px;width:88vw;}
+    /* 背包/装备面板 */
+    #inv{width:94vw;max-height:82vh;}
+    #invbody{flex-direction:column;gap:10px;padding:10px;overflow-y:auto;}
+    #equips{width:100%;flex-direction:row;flex-wrap:wrap;gap:6px;}
+    .eslot{flex:1 1 46%;min-width:138px;height:46px;}
+    #bag{grid-template-columns:repeat(3,1fr);max-height:40vh;overflow-y:auto;}
+    .bslot{height:56px;}
+    #itemtooltip{width:min(230px,86vw);}
+    /* 属性面板 */
+    #stats{right:8px;top:auto;bottom:calc(180px + env(safe-area-inset-bottom));width:176px;z-index:35;}
+    /* 全屏界面（标题/死亡/胜利） */
+    .screen .logo{font-size:30px;letter-spacing:4px;}
+    .screen .logo small{font-size:11px;letter-spacing:3px;}
+    .screen .tagline{font-size:12px;margin-top:14px;max-width:88vw;line-height:1.6;}
+    .screen .sub{font-size:11px;max-width:88vw;}
+    .resrow{gap:14px;font-size:12px;flex-wrap:wrap;justify-content:center;}
+    .resrow b{font-size:18px;}
+    .btn{padding:10px 28px;font-size:14px;}
+    #tutorial{max-width:88vw;padding:14px 16px;font-size:12px;line-height:1.7;}
+    #msg{font-size:14px;top:100px;padding:0 10px;text-align:center;max-width:90vw;box-sizing:border-box;}
+    /* 选卡（小屏） */
+    #cardpick .logo{font-size:24px;letter-spacing:2px;}
+    #cardRow{gap:10px;margin-top:18px;}
+    .ccard{width:44vw;min-width:138px;min-height:196px;padding:12px 8px;gap:4px;}
+    .cc-icon{font-size:30px;}
+    .cc-name{font-size:14px;}
+    .cc-rare{font-size:10px;}
+    .cc-desc{font-size:11px;line-height:1.5;}
+  }
 </style>
 </head>
 <body>
@@ -139,6 +213,18 @@
   <b>Shift</b> 疾跑 &nbsp; <b>空格</b> 翻滚闪避 &nbsp; <b>Esc</b> 暂停
 </div>
 
+<div id="helpsTouch">
+  <b>点地面</b> 移动 · <b>点怪物</b> 锁定攻击<br>
+  <b>底部按钮</b> 放技能（自动瞄准）<br>
+  <b>右下按钮</b> 背包 / 翻滚 / 幻兽
+</div>
+
+<div id="mobilebar">
+  <button class="mbtn" id="btnBag" title="背包">🎒</button>
+  <button class="mbtn" id="btnDodge" title="翻滚闪避">💨</button>
+  <button class="mbtn" id="btnBeast" title="幻兽出击/召回">🐺</button>
+</div>
+
 <div id="stats" class="panel">
   <div class="tt">角色属性</div>
   <div class="st"><span>攻击力</span><b id="sAtk">0</b></div>
@@ -148,7 +234,10 @@
   <div class="st"><span>移速</span><b id="sMs">0</b></div>
   <div class="st"><span>生命上限</span><b id="sMaxHp">0</b></div>
   <div class="st"><span>护甲</span><b id="sArm">0</b></div>
-  <div class="tt">装备详情见背包</div>
+  <div class="st"><span>伤害加成</span><b id="sDmg">0%</b></div>
+  <div class="st"><span>生命回复/秒</span><b id="sRegen">0</b></div>
+  <div class="st"><span>技能强化</span><b id="sSkill">—</b></div>
+  <div class="tt">装备详情见背包 · 卡牌强化见本局</div>
 </div>
 
 <div id="inv" class="panel">
@@ -163,10 +252,16 @@
 <div id="msg"></div>
 <div id="tutorial"></div>
 
+<div id="cardpick" class="screen hidden">
+  <div class="logo">选择你的力量</div>
+  <div class="sub" id="cardSub">第 1 层已清空 · 在两张卡牌中选择一张</div>
+  <div id="cardRow"></div>
+</div>
+
 <div id="start" class="screen">
   <div class="logo">魔域·裂界<small>MYSTIC RIFT · 2.5D 刷宝ARPG原型</small></div>
   <div class="tagline">魔界裂缝撕开了亚特大陆的边境。你是一名猎魔人，带着一只幻兽，深入裂界地窟——<br>清空每一层的魔物，搜刮染血的战利品，在装备与词缀之间构筑自己的流派。</div>
-  <div class="sub">原型范围：1 职业 · 4 技能 · 幻兽养成 · 5 层地窟 · 4 档稀有度装备 · 无尽挑战模式<br>本作为魔域题材的同人风格原型，美术为程序化生成，不包含原版素材。</div>
+  <div class="sub">原型范围：1 职业 · 4 技能 · 幻兽养成 · 30 层地窟（每 5 层魔王镇守）· 过层二选一肉鸽卡牌 · 4 档稀有度装备<br>本作为魔域题材的同人风格原型，美术为程序化生成，不包含原版素材。</div>
   <button class="btn" id="startBtn">进入裂界</button>
 </div>
 
@@ -185,9 +280,9 @@
 
 <div id="win" class="screen hidden">
   <div class="logo">裂界已清空</div>
-  <div class="tagline">你击穿了地窟最深处，封印暂时闭合。真正的裂界没有尽头——挑战继续深入！</div>
+  <div class="tagline">你击穿了第 30 层裂界最深处，封印暂时闭合。真正的裂界没有尽头——继续深入无尽深渊，挑战无穷无尽的魔王！</div>
   <div class="resrow">
-    <div>到达层数<b id="wFloor">5</b></div>
+    <div>到达层数<b id="wFloor">30</b></div>
     <div>击杀<b id="wKill">0</b></div>
     <div>拾取装备<b id="wLoot">0</b></div>
     <div>获得魂晶<b id="wSoul">0</b></div>
@@ -206,8 +301,10 @@
 <script src="js/loot.js"></script>
 <script src="js/entities.js"></script>
 <script src="js/combat.js"></script>
+<script src="js/assets.js"></script>
 <script src="js/render.js"></script>
 <script src="js/ui.js"></script>
+<script src="js/cards.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>
